@@ -1,0 +1,132 @@
+[Guide] Part 1. How to set Global Flag.
+The simplest way is a hidden event which will fire on game start and set the global flag.
+
+Example from autobuild:
+event = {
+	id = autobuild.101
+	hide_window = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_global_flag = autobuild_installed
+	}
+}
+
+Andd set it to on_game_start hook:
+on_game_start = {
+	events = {
+		autobuild.101
+	}
+}
+
+And add it to on_actions[github.com]
+
+But this event will not fire in save loaded game.
+Fire only once solution turns to be bad solution.
+
+[Guide] Part 2: Make A Menu.
+This topic is too broad to cover here, so I'll just explain how I made the menus for my mods. You can do a different implementation for your mod as you need (whatever is allowed by Stellaris).
+
+Since this menu is just a regular event, all triggers and effects can be applied.
+
+My menu from human fallen empires[github.com]
+
+So what mean all what text?
+
+First huge block is desc
+You can just write text:
+
+text = human_fallen_empires_menu.1.desc.0
+
+You can display text, then some condition is met:
+success_text = {
+	text = human_fallen_empires_menu.1.desc.1.0
+	has_global_flag = human_fallen_empires_installed
+}
+This text shown if mod installed (always if all works fine).
+
+And you can display text, if condition not met:
+fail_text = {
+	text = human_fallen_empires_menu.1.desc.2.1
+	any_country = {
+		has_country_flag = human_fallen_empires_egypt
+	}
+}
+This text shown if fallen empire from mod not exists (failed to spawn or die during the game).
+
+
+Next huge block is options.
+
+These options can preform a lot of functions: set flags, spawn ships/systems, modifiers, or simply give information in event descriptions about something in your mod.
+You can read on wiki[www.stellariswiki.com]
+
+So what my options does?
+every_country = {
+	limit = {
+		has_country_flag = human_fallen_empires_marked_as_human
+		species = {
+			not = {
+				is_same_species = event_target:human_fallen_empires_human_species
+			}
+		}
+	}
+	species = { set_species_identity = event_target:human_fallen_empires_human_species }
+}
+This option will look for any country which is marked as a human empire by my mod (by using a country flag) but is not currently recognized as a "human species". If it finds such an empire, it will then add that empire to the list of human species, so this empire will not be identified as "alien" to other human empires.
+
+After the option has preformed whatever task it is meant to do, this will return the player to the Mod Menu event:
+country_event = { id = human_fallen_empires_menu.1 }
+
+Next option just set hidden flag to player "i mod and i think he is human"
+set_country_flag = human_fallen_empires_marked_as_human
+country_event = { id = human_fallen_empires_menu.1 }
+
+Next two options disable mod's feature for people who don't like it:
+First re enable pirates (allow to spawn)
+
+remove_global_flag = human_fallen_empires_disable_pirate
+
+Second set global flag (used for trigger in respawn events) and kill all pirate countries.
+
+set_global_flag = human_fallen_empires_disable_pirate
+every_country = {
+	limit = {
+		is_country_type = human_fallen_empires_pirate
+	}
+	every_owned_planet = {
+		change_pc = pc_asteroid
+	}
+	destroy_country = yes
+}
+
+[Guide] Part 3: Resources of Mod Menu.
+How to really add a mod to the menu?
+
+You will need a flag from the first guide and a mod menu event for your mod from the second guide.
+Then you need to contact me so that I can add a new option which will use your flag to make it appear only when your mod is active in-game and link to your menu event.
+
+Example of option:
+
+option = {
+	name = modmenu.2
+	custom_tooltip = modmenu.2.tooltip
+	trigger = {
+		or = {
+			has_global_flag = has_nsc_active
+			has_global_flag = has_playable_guardians
+		}
+	}
+	hidden_effect = {
+		country_event = { id = NSC_features.1 }
+	}
+}
+
+There are two ways to proceed:
+
+Leave it as it is, then to access your menu, your subscribers will need to also subscribe to Mod Menu mod in order to see the button.
+
+If you consider the menu an important part of your mod or do not want to bother the user with a subscription to an extra mod, you can simply copy all the files of this mod to your own.
+
+You can also change your local copy of the Mod Menu as you want in localisation, as long as the localisation string is alphabetically superior to any other mod using the Mod Menu. For example, with careful localisation rewrites, this is the new localisation for the local Mod Menu found in NSC:
+
+http://puu.sh/wRI2W/f85c440ca1.jpg
